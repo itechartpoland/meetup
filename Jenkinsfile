@@ -1,22 +1,13 @@
 pipeline {
   agent { label 'kubeslave' }
   stages {
-    stage('Prepare workspace') {
-      steps {
-        script {
-          projectInfo = readYaml (file: './project.yaml')
-          currentBuild.displayName = "${projectInfo.VERSION}-${env.BRANCH_NAME}-${GIT_COMMIT[0..5]}"
-        } 
-      }
-    }
     stage('Build and Dockerize') {
       steps{
-        container('docker') {
+        container('builder') {
           script {
-            docker.withRegistry('', 'dockerjenkins') {
-              dockerImage = docker.build("${projectInfo.DOCKER_REPOSITORY}/${projectInfo.NAME}:${projectInfo.VERSION}-${env.BRANCH_NAME}-${GIT_COMMIT[0..5]}")
-              dockerImage.push()
-            }
+              sh "docker pull docker.io/eclipse-temurin:17-jdk-jammy"
+              sh "docker build . -t itechartpoland/meetup-java-app:1.0.0"
+              sh "docker push itechartpoland/meetup-java-app:1.0.0-${env.BRANCH_NAME}"
           }
         }
       }
